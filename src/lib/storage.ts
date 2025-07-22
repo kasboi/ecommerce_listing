@@ -91,15 +91,20 @@ const initialReviews: Review[] = [
 ]
 
 // Product CRUD operations
+export const initProducts = () => {
+  localStorage.setItem(PRODUCTS_KEY, JSON.stringify(initialProducts))
+  return initialProducts
+}
+
 export const getProducts = (): Product[] => {
   if (typeof window === 'undefined') return initialProducts
 
   const stored = localStorage.getItem(PRODUCTS_KEY)
   if (!stored) {
-    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(initialProducts))
-    return initialProducts
+    return initProducts()
   }
   return JSON.parse(stored)
+
 }
 
 export const getProductById = (id: string): Product | null => {
