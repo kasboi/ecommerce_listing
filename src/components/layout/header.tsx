@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Search, Menu, X, ShoppingCart, User } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { initProducts } from "@/src/lib/storage";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -12,11 +14,12 @@ interface HeaderProps {
 
 export function Header({ onSearch }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSearch?.(searchQuery);
+  const handleProductsReset = () => {
+    initProducts();
+    setIsMenuOpen(false);
+    // Force a hard refresh to ensure the products page re-renders with new data
+    window.location.reload();
   };
 
   return (
@@ -51,6 +54,9 @@ export function Header({ onSearch }: HeaderProps) {
             >
               Admin
             </Link>
+            <Button variant="destructive" onClick={handleProductsReset}>
+              Reset Local Storage
+            </Button>
           </nav>
 
           {/* Action Buttons */}
@@ -99,6 +105,9 @@ export function Header({ onSearch }: HeaderProps) {
                 >
                   Admin
                 </Link>
+                <Button variant="destructive" onClick={handleProductsReset}>
+                  Reset Local Storage
+                </Button>
               </nav>
             </div>
           </div>
