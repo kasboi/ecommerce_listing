@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Search, Menu, X, ShoppingCart, User } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { initProducts } from "@/src/lib/storage";
+import { useResetProducts } from "../../hooks/use-queries";
 import { useRouter } from "next/navigation";
 
 interface HeaderProps {
@@ -14,12 +14,19 @@ interface HeaderProps {
 
 export function Header({ onSearch }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const resetProductsMutation = useResetProducts();
 
-  const handleProductsReset = () => {
-    initProducts();
-    setIsMenuOpen(false);
-    // Force a hard refresh to ensure the products page re-renders with new data
-    window.location.reload();
+  const handleProductsReset = async () => {
+    try {
+      await resetProductsMutation.mutateAsync();
+      setIsMenuOpen(false);
+      // Show success message
+      window.location.reload(); // Reload to reflect changes
+      alert("Products have been reset to default values!");
+    } catch (error) {
+      console.error("Failed to reset products:", error);
+      alert("Failed to reset products. Please try again.");
+    }
   };
 
   return (
@@ -54,8 +61,14 @@ export function Header({ onSearch }: HeaderProps) {
             >
               Admin
             </Link>
-            <Button variant="destructive" onClick={handleProductsReset}>
-              Reset Local Storage
+            <Button
+              variant="destructive"
+              onClick={handleProductsReset}
+              disabled={resetProductsMutation.isPending}
+            >
+              {resetProductsMutation.isPending
+                ? "Resetting..."
+                : "Reset Local Storage"}
             </Button>
           </nav>
 
@@ -105,8 +118,14 @@ export function Header({ onSearch }: HeaderProps) {
                 >
                   Admin
                 </Link>
-                <Button variant="destructive" onClick={handleProductsReset}>
-                  Reset Local Storage
+                <Button
+                  variant="destructive"
+                  onClick={handleProductsReset}
+                  disabled={resetProductsMutation.isPending}
+                >
+                  {resetProductsMutation.isPending
+                    ? "Resetting..."
+                    : "Reset Local Storage"}
                 </Button>
               </nav>
             </div>

@@ -1,20 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProductFormData } from "../../../src/lib/types";
-import { createProduct } from "../../../src/lib/storage";
+import { useCreateProduct } from "../../../src/hooks/use-queries";
 import { ProductForm } from "../../../src/components/products/product-form";
 
 export default function AddProductPage() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createProductMutation = useCreateProduct();
 
   const handleSubmit = async (data: ProductFormData) => {
-    setIsSubmitting(true);
-
     try {
-      const newProduct = createProduct(data);
+      const newProduct = await createProductMutation.mutateAsync(data);
 
       // Show success message (you could add a toast notification here)
       alert(`Product "${newProduct.name}" has been added successfully!`);
@@ -24,10 +21,13 @@ export default function AddProductPage() {
     } catch (error) {
       console.error("Failed to add product:", error);
       alert("Failed to add product. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  return <ProductForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />;
+  return (
+    <ProductForm
+      onSubmit={handleSubmit}
+      isSubmitting={createProductMutation.isPending}
+    />
+  );
 }

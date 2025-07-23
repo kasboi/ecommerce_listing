@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "../src/components/layout/header";
+import QueryProvider from "../src/components/providers/query-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,15 +29,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Header />
-        <main className="min-h-screen bg-gray-50">{children}</main>
-        <footer className="bg-white border-t">
-          <div className="container mx-auto px-4 py-8">
-            <div className="text-center text-gray-600 font-semibold">
-              <p>&copy; 2025 GidiStore. All rights reserved.</p>
+        <QueryProvider>
+          <Header />
+          <main className="min-h-screen bg-gray-50">{children}</main>
+          <footer className="bg-white border-t">
+            <div className="container mx-auto px-4 py-8">
+              <div className="text-center text-gray-600 font-semibold">
+                <p>&copy; 2025 GidiStore. All rights reserved.</p>
+              </div>
             </div>
-          </div>
-        </footer>
+          </footer>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,61 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use } from "react";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
-import { Product, ProductFormData } from "../../../../src/lib/types";
-import { getProductById, updateProduct } from "../../../../src/lib/storage";
+import { ProductFormData } from "../../../../src/lib/types";
+import {
+  useProduct,
+  useUpdateProduct,
+} from "../../../../src/hooks/use-queries";
 import { ProductForm } from "../../../../src/components/products/product-form";
 
 interface EditProductPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const fetchProduct = () => {
-      const productData = getProductById(params.id);
-      if (!productData) {
-        notFound();
-      }
-      setProduct(productData);
-      setIsLoading(false);
-    };
+  // Extract params using use() hook for async params
+  const { id } = use(params);
 
-    fetchProduct();
-  }, [params.id]);
+  const { data: product, isLoading, error } = useProduct(id);
+  const updateProductMutation = useUpdateProduct();
+
+  // If product not found
+  if (error && !isLoading) {
+    notFound();
+  }
 
   const handleSubmit = async (data: ProductFormData) => {
     if (!product) return;
 
-    setIsSubmitting(true);
-
     try {
-      const updatedProduct = updateProduct(product.id, data);
+      const updatedProduct = await updateProductMutation.mutateAsync({
+        id: product.id,
+        data,
+      });
 
-      if (updatedProduct) {
-        // Show success message
-        alert(
-          `Product "${updatedProduct.name}" has been updated successfully!`,
-        );
+      // Show success message
+      alert(`Product "${updatedProduct.name}" has been updated successfully!`);
 
-        // Redirect to admin page
-        router.push("/admin");
-      } else {
-        throw new Error("Failed to update product");
-      }
+      // Redirect to admin page
+      router.push("/admin");
     } catch (error) {
       console.error("Failed to update product:", error);
       alert("Failed to update product. Please try again.");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -78,7 +69,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     <ProductForm
       product={product}
       onSubmit={handleSubmit}
-      isSubmitting={isSubmitting}
+      isSubmitting={updateProductMutation.isPending}
     />
   );
 }

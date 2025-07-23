@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { Product, ProductFormData } from "../../../src/lib/types";
-import { getCategories } from "../../../src/lib/storage";
+import { useCategories } from "../../hooks/use-queries";
 import { Button } from "../../../src/components/ui/button";
 import { Input } from "../../../src/components/ui/input";
 import {
@@ -39,7 +39,8 @@ export function ProductForm({
   >({});
   const [imagePreview, setImagePreview] = useState(product?.image || "");
 
-  const categories = getCategories();
+  const { data: categories = [], isLoading: isLoadingCategories } =
+    useCategories();
   const allCategories = [
     "Gaming",
     "Audio",
@@ -79,10 +80,19 @@ export function ProductForm({
     if (!formData.image.trim()) {
       newErrors.image = "Image URL is required";
     } else {
-      try {
-        new URL(formData.image);
-      } catch {
-        newErrors.image = "Please enter a valid URL";
+      // Allow both relative URLs (starting with /) and absolute URLs
+      const isRelativeUrl = formData.image.startsWith('/');
+      const isValidAbsoluteUrl = () => {
+        try {
+          new URL(formData.image);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+      
+      if (!isRelativeUrl && !isValidAbsoluteUrl()) {
+        newErrors.image = "Please enter a valid URL (e.g., /image.jpg or https://example.com/image.jpg)";
       }
     }
 
@@ -227,16 +237,22 @@ export function ProductForm({
                   onChange={(e) =>
                     handleInputChange("category", e.target.value)
                   }
+                  disabled={isLoadingCategories}
                   className={`w-full h-10 px-3 py-2 border rounded-md bg-transparent text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     errors.category ? "border-red-500" : "border-input"
                   }`}
                 >
-                  <option value="">Select a category</option>
-                  {uniqueCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
+                  <option value="">
+                    {isLoadingCategories
+                      ? "Loading categories..."
+                      : "Select a category"}
+                  </option>
+                  {!isLoadingCategories &&
+                    uniqueCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
                 </select>
                 {errors.category && (
                   <p className="mt-1 text-sm text-red-600">{errors.category}</p>
@@ -254,10 +270,10 @@ export function ProductForm({
               </label>
               <Input
                 id="image"
-                type="url"
+                type="text"
                 value={formData.image}
                 onChange={(e) => handleImageChange(e.target.value)}
-                placeholder="https://example.com/image.jpg"
+                placeholder="/image.jpg or https://example.com/image.jpg"
                 className={errors.image ? "border-red-500" : ""}
               />
               {errors.image && (

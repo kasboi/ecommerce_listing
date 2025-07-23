@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,12 +12,12 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { Product, Review } from "../../../src/lib/types";
+import { Review } from "../../../src/lib/types";
 import {
-  getProductById,
-  getReviewsByProductId,
-  createReview,
-} from "../../../src/lib/storage";
+  useProduct,
+  useReviews,
+  useCreateReview,
+} from "../../../src/hooks/use-queries";
 import { Button } from "../../../src/components/ui/button";
 import {
   Card,
@@ -34,43 +34,34 @@ interface ProductPageProps {
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { id } = use(params);
+
+  const {
+    data: product,
+    isLoading: isLoadingProduct,
+    error: productError,
+  } = useProduct(id);
+  const { data: reviews = [], isLoading: isLoadingReviews } = useReviews(id);
+  const createReviewMutation = useCreateReview();
+
   const [newReview, setNewReview] = useState({
     author: "",
     rating: 5,
     comment: "",
   });
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  const { id } = use(params);
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      const productData = getProductById(id);
-      if (!productData) {
-        notFound();
-      }
-      setProduct(productData);
-
-      const productReviews = getReviewsByProductId(id);
-      setReviews(productReviews);
-      setIsLoading(false);
-    };
-
-    fetchProduct();
-  }, [id]);
+  // If product not found
+  if (productError && !isLoadingProduct) {
+    notFound();
+  }
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!product || !newReview.author.trim() || !newReview.comment.trim())
       return;
 
-    setIsSubmittingReview(true);
-
     try {
-      const review = createReview({
+      await createReviewMutation.mutateAsync({
         productId: product.id,
         author: newReview.author,
         rating: newReview.rating,
@@ -78,18 +69,9 @@ export default function ProductPage({ params }: ProductPageProps) {
         date: new Date().toISOString().split("T")[0],
       });
 
-      setReviews((prev) => [review, ...prev]);
       setNewReview({ author: "", rating: 5, comment: "" });
-
-      // Update product data to reflect new rating
-      const updatedProduct = getProductById(id);
-      if (updatedProduct) {
-        setProduct(updatedProduct);
-      }
     } catch (error) {
       console.error("Failed to submit review:", error);
-    } finally {
-      setIsSubmittingReview(false);
     }
   };
 
@@ -117,7 +99,7 @@ export default function ProductPage({ params }: ProductPageProps) {
     );
   };
 
-  if (isLoading) {
+  if (isLoadingProduct) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center py-12">
@@ -296,9 +278,11 @@ export default function ProductPage({ params }: ProductPageProps) {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isSubmittingReview}
+                  disabled={createReviewMutation.isPending}
                 >
-                  {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                  {createReviewMutation.isPending
+                    ? "Submitting..."
+                    : "Submit Review"}
                 </Button>
               </form>
             </CardContent>
@@ -312,7 +296,12 @@ export default function ProductPage({ params }: ProductPageProps) {
               <CardTitle>Customer Reviews ({reviews.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {reviews.length > 0 ? (
+              {isLoadingReviews ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading reviews...</p>
+                </div>
+              ) : reviews.length > 0 ? (
                 <div className="space-y-6">
                   {reviews.map((review) => (
                     <div

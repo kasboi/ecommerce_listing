@@ -2,30 +2,50 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { ArrowRight, Star } from "lucide-react";
 import { Product } from "../src/lib/types";
-import { getProducts } from "../src/lib/storage";
+import { useProducts } from "../src/hooks/use-queries";
 import { ProductCard } from "../src/components/products/product-card";
 import { Button } from "../src/components/ui/button";
 
 export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
+  const { data: products = [], isLoading, error } = useProducts();
 
-  useEffect(() => {
-    const allProducts = getProducts();
-    setProducts(allProducts);
-
-    // Set featured product (highest rated with reviews)
-    const featured =
-      allProducts
-        .filter((p) => p.reviewCount > 0)
-        .sort((a, b) => b.rating - a.rating)[0] || allProducts[0];
-    setFeaturedProduct(featured);
-  }, []);
+  // Get featured product (highest rated with reviews)
+  const featuredProduct =
+    products
+      .filter((p) => p.reviewCount > 0)
+      .sort((a, b) => b.rating - a.rating)[0] || products[0];
 
   const latestProducts = products.slice(0, 6);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Error loading products
+          </h3>
+          <p className="text-gray-600 mb-6">
+            {error instanceof Error ? error.message : "Something went wrong"}
+          </p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

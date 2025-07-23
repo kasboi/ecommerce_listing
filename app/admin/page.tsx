@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Edit, Trash2, Package } from "lucide-react";
-import { Product } from "../../src/lib/types";
-import { getProducts, deleteProduct } from "../../src/lib/storage";
+import { useProducts, useDeleteProduct } from "../../src/hooks/use-queries";
 import { Button } from "../../src/components/ui/button";
 import {
   Card,
@@ -14,37 +12,24 @@ import {
 } from "../../src/components/ui/card";
 
 export default function AdminPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { data: products = [], isLoading, error } = useProducts();
+  const deleteProductMutation = useDeleteProduct();
 
-  useEffect(() => {
-    const allProducts = getProducts();
-    setProducts(allProducts);
-    setIsLoading(false);
-  }, []);
-
-  const handleDeleteProduct = async (id: string) => {
+  const handleDeleteProduct = async (id: string, name: string) => {
     if (
       !confirm(
-        "Are you sure you want to delete this product? This action cannot be undone.",
+        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
       )
     ) {
       return;
     }
 
-    setDeletingId(id);
-
     try {
-      const success = deleteProduct(id);
-      if (success) {
-        setProducts((prev) => prev.filter((product) => product.id !== id));
-      }
+      await deleteProductMutation.mutateAsync(id);
+      alert(`Product "${name}" has been deleted successfully!`);
     } catch (error) {
       console.error("Failed to delete product:", error);
       alert("Failed to delete product. Please try again.");
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -146,11 +131,13 @@ export default function AdminPage() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => handleDeleteProduct(product.id)}
-                    disabled={deletingId === product.id}
+                    onClick={() =>
+                      handleDeleteProduct(product.id, product.name)
+                    }
+                    disabled={deleteProductMutation.isPending}
                     className="px-3"
                   >
-                    {deletingId === product.id ? (
+                    {deleteProductMutation.isPending ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <Trash2 className="w-4 h-4" />
