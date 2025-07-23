@@ -84,10 +84,13 @@ export default function HomePage() {
 
               <div className="relative">
                 <div className="aspect-square relative rounded-lg overflow-hidden">
-                  <img
+                  <Image
                     src={featuredProduct.image}
                     alt={featuredProduct.name}
-                    className="object-cover"
+                    width={300}
+                    height={300}
+                    className="object-cover h-full w-full"
+                    priority
                   />
                 </div>
               </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -28,9 +28,9 @@ import {
 import { Input } from "../../../src/components/ui/input";
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function ProductPage({ params }: ProductPageProps) {
@@ -44,21 +44,23 @@ export default function ProductPage({ params }: ProductPageProps) {
   });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+  const { id } = use(params);
+
   useEffect(() => {
     const fetchProduct = async () => {
-      const productData = getProductById(params.id);
+      const productData = getProductById(id);
       if (!productData) {
         notFound();
       }
       setProduct(productData);
 
-      const productReviews = getReviewsByProductId(params.id);
+      const productReviews = getReviewsByProductId(id);
       setReviews(productReviews);
       setIsLoading(false);
     };
 
     fetchProduct();
-  }, [params.id]);
+  }, [id]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +82,7 @@ export default function ProductPage({ params }: ProductPageProps) {
       setNewReview({ author: "", rating: 5, comment: "" });
 
       // Update product data to reflect new rating
-      const updatedProduct = getProductById(params.id);
+      const updatedProduct = getProductById(id);
       if (updatedProduct) {
         setProduct(updatedProduct);
       }
@@ -145,11 +147,13 @@ export default function ProductPage({ params }: ProductPageProps) {
       <div className="grid lg:grid-cols-2 gap-12 mb-12">
         {/* Product Image */}
         <div className="space-y-4">
-          <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-100">
-            <img
+          <div className="aspect-square max-w-[640px] relative rounded-lg overflow-hidden bg-gray-100">
+            <Image
               src={product.image}
               alt={product.name}
-              className="object-cover w-full"
+              width={300}
+              height={300}
+              className="object-cover w-full h-full"
             />
           </div>
         </div>
