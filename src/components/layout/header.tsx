@@ -6,7 +6,7 @@ import { Search, Menu, X, ShoppingCart, User } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useResetProducts } from "../../hooks/use-queries";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 
 interface HeaderProps {
@@ -16,6 +16,11 @@ interface HeaderProps {
 export function Header({ onSearch }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const resetProductsMutation = useResetProducts();
+  const pathname = usePathname();
+
+  // Hide reset button on product detail pages
+  const isProductDetailPage =
+    pathname?.startsWith("/products/") && pathname !== "/products";
 
   const handleProductsReset = async () => {
     try {
@@ -62,15 +67,17 @@ export function Header({ onSearch }: HeaderProps) {
             >
               Admin
             </Link>
-            <Button
-              variant="destructive"
-              onClick={handleProductsReset}
-              disabled={resetProductsMutation.isPending}
-            >
-              {resetProductsMutation.isPending
-                ? "Resetting..."
-                : "Reset Local Storage"}
-            </Button>
+            {!isProductDetailPage && (
+              <Button
+                variant="destructive"
+                onClick={handleProductsReset}
+                disabled={resetProductsMutation.isPending}
+              >
+                {resetProductsMutation.isPending
+                  ? "Resetting..."
+                  : "Reset Local Storage"}
+              </Button>
+            )}
           </nav>
 
           {/* Action Buttons */}
@@ -119,15 +126,17 @@ export function Header({ onSearch }: HeaderProps) {
                 >
                   Admin
                 </Link>
-                <Button
-                  variant="destructive"
-                  onClick={handleProductsReset}
-                  disabled={resetProductsMutation.isPending}
-                >
-                  {resetProductsMutation.isPending
-                    ? "Resetting..."
-                    : "Reset Local Storage"}
-                </Button>
+                {!isProductDetailPage && (
+                  <Button
+                    variant="destructive"
+                    onClick={handleProductsReset}
+                    disabled={resetProductsMutation.isPending}
+                  >
+                    {resetProductsMutation.isPending
+                      ? "Resetting..."
+                      : "Reset Local Storage"}
+                  </Button>
+                )}
               </nav>
             </div>
           </div>
