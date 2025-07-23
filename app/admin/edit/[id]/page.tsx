@@ -9,6 +9,7 @@ import {
   useUpdateProduct,
 } from "../../../../src/hooks/use-queries";
 import { ProductForm } from "../../../../src/components/products/product-form";
+import { toast } from "react-toastify";
 
 interface EditProductPageProps {
   params: Promise<{
@@ -40,13 +41,15 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       });
 
       // Show success message
-      alert(`Product "${updatedProduct.name}" has been updated successfully!`);
+      toast.success(
+        `Product "${updatedProduct.name}" has been updated successfully!`,
+      );
 
       // Redirect to admin page
       router.push("/admin");
     } catch (error) {
       console.error("Failed to update product:", error);
-      alert("Failed to update product. Please try again.");
+      toast.error("Failed to update product. Please try again.");
     }
   };
 

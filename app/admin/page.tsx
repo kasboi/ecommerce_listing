@@ -10,26 +10,26 @@ import {
   CardHeader,
   CardTitle,
 } from "../../src/components/ui/card";
+import { toast } from "react-toastify";
 
 export default function AdminPage() {
   const { data: products = [], isLoading, error } = useProducts();
   const deleteProductMutation = useDeleteProduct();
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-      )
-    ) {
+    const confirmDeletion = confirm(
+      `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+    );
+    if (!confirmDeletion) {
       return;
     }
 
     try {
       await deleteProductMutation.mutateAsync(id);
-      alert(`Product "${name}" has been deleted successfully!`);
+      toast.success(`${name} has been deleted successfully!`);
     } catch (error) {
       console.error("Failed to delete product:", error);
-      alert("Failed to delete product. Please try again.");
+      toast.error("Failed to delete product. Please try again.");
     }
   };
 

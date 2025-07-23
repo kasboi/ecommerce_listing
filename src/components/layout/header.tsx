@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useResetProducts } from "../../hooks/use-queries";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 interface HeaderProps {
   onSearch?: (query: string) => void;
@@ -21,11 +22,11 @@ export function Header({ onSearch }: HeaderProps) {
       await resetProductsMutation.mutateAsync();
       setIsMenuOpen(false);
       // Show success message
+      toast.success("Products have been reset to default values!");
       window.location.reload(); // Reload to reflect changes
-      alert("Products have been reset to default values!");
     } catch (error) {
       console.error("Failed to reset products:", error);
-      alert("Failed to reset products. Please try again.");
+      toast.error("Failed to reset products. Please try again.");
     }
   };
 
